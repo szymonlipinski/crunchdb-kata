@@ -8,7 +8,7 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import List
 
-from .file_format import IdsDataFile, MultiValueDataFile, OneValue, OneValueDataFile, MultiValue
+from .file_format import IdsDataFile, MultiValueDataFile, SingleValue, SingleValueDataFile, MultiValue
 
 log = logging.getLogger(__name__)
 
@@ -185,7 +185,9 @@ class Database:
         self._ids[collection.name].append(pk)
         IdsDataFile(self._get_file_name(collection, FileType.IDS)).write(pk)
 
-        OneValueDataFile(self._get_file_name(collection, FileType.ONE_VALUE)).write(OneValue(pk=pk, value=int_value))
+        SingleValueDataFile(self._get_file_name(collection, FileType.ONE_VALUE)).write(
+            SingleValue(pk=pk, value=int_value)
+        )
 
     def _check_id_is_in_file(self, collection: Collection, pk: int):
         return pk in self._ids[collection.name]

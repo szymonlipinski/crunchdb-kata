@@ -10,7 +10,7 @@ log = logging.getLogger(__name__)
 
 
 @dataclass
-class OneValue:
+class SingleValue:
     pk: int
     value: int
 
@@ -62,8 +62,8 @@ class IdsDataFile(DataFile):
                     break
 
 
-class OneValueDataFile(DataFile):
-    def write(self, value: OneValue):
+class SingleValueDataFile(DataFile):
+    def write(self, value: SingleValue):
         with open(self.file_path, "ab") as f:
             f.write(self._to_four_bytes(value.pk))
             f.write(self._to_two_bytes(value.value))
@@ -77,7 +77,7 @@ class OneValueDataFile(DataFile):
                 pk = f.read(4)
                 value = f.read(2)
                 if pk and value:
-                    yield OneValue(pk=self._from_bytes(pk), value=self._from_bytes(value))
+                    yield SingleValue(pk=self._from_bytes(pk), value=self._from_bytes(value))
                 else:
                     break
 
