@@ -8,6 +8,8 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import List
 
+from .file_format import IdsDataFile, MultiValueDataFile, OneValue, OneValueDataFile, MultiValue
+
 log = logging.getLogger(__name__)
 
 
@@ -17,7 +19,8 @@ class Sorting(Enum):
 
 
 class FileType(Enum):
-    DATA = "data"
+    ONE_VALUE = "one.data"
+    MULTI_VALUE = "multi.data"
     IDS = "ids"
 
 
@@ -39,12 +42,6 @@ class Choice:
     name: str
     values: list
     dict_values: dict
-
-
-@dataclass
-class OneAnswer:
-    pk: int
-    value: int
 
 
 class Database:
@@ -71,21 +68,7 @@ class Database:
         for collection in collections:
             self._ids[collection.name] = []
             file_path = self._get_file_name(collection, FileType.IDS)
-
-            values = []
-            if not os.path.exists(file_path):
-                continue
-
-            with open(file_path, "rb") as f:
-                while True:
-                    value = f.read(4)
-                    if value:
-                        value = int.from_bytes(value, byteorder="big")
-                        values.append(value)
-                    else:
-                        break
-            self._ids[collection.name] = values
-            print(values)
+            self._ids[collection.name] = list(IdsDataFile(file_path).read())
 
     def _read_config(self):
         """Reads the config file, makes basic validation."""
@@ -133,7 +116,7 @@ class Database:
         for name, value in collections.items():
             ma = value.get("multiple_answers")
             assert ma is not None, f"There should be the multiple_answers field for {name}."
-            assert ma in [True, False,], "Multiple_answers field should have values of true/false."
+            assert ma in [True, False], "Multiple_answers field should have values of true/false."
 
             ch = value.get("choices")
             assert ma is not None, f"There should be the choices field for {name}."
@@ -142,52 +125,67 @@ class Database:
     def store_answer(self, answer: dict) -> None:
         """Saves the answer to the collection.
 
-        :param answer: answer to store
+        We don't support updates now, so if the answer is already stored, nothing will be written to any file.
+
+
+        :param answer: answer to store as dictionary from parsed json
         """
         pk = int(answer["pk"])
         for name, collection in self._collections.items():
+
+            if self._check_id_is_in_file(collection, pk):
+                log.info(f"There already is data for {collection} for pk={pk}, skipping it.")
+                continue
+
             if collection.multiple_answers is False:
                 value = answer[name]
-                log.info(f"one item, {name} -> {value}")
-                self.write_one_answer(collection, pk, value)
+                log.debug(f"one item, {name} -> {value}")
+                self.write_to_one_answer_file(collection, pk, value)
 
-            # for answer_key, answer_value in answer.items():
-            #     key_parts = answer_key.split(".")
+            else:
+                yes_choices = []
+                no_choices = []
+                for answer_key, answer_value in answer.items():
+                    key_parts = answer_key.split(".")
+                    if key_parts[0] != name:
+                        continue
+                    choice_name = ".".join(key_parts[1:])
+                    if answer_value == "no":
+                        no_choices.append(choice_name)
+                    elif answer_value == "yes":
+                        yes_choices.append(choice_name)
+                self.write_to_multi_answer_file(collection, pk, yes_choices, no_choices)
 
-    def write_one_answer(self, collection: Collection, pk: int, value: str) -> None:
-        if self._check_id_is_in_file(collection, pk):
-            log.info(f"There already is data for {collection} for pk={pk}, skipping it.")
-            return
+    def write_to_multi_answer_file(
+        self, collection: Collection, pk: int, yes_choices: List[str], no_choices: List[str]
+    ) -> None:
+        int_yes_values = [self._choices[collection.choices_name].dict_values[value] for value in yes_choices]
+        int_no_values = [self._choices[collection.choices_name].dict_values[value] for value in no_choices]
 
+        self._ids[collection.name].append(pk)
+        IdsDataFile(self._get_file_name(collection, FileType.IDS)).write(pk)
+
+        data_file = MultiValueDataFile(
+            self._get_file_name(collection, FileType.MULTI_VALUE), len(self._choices[collection.choices_name].values)
+        )
+        value = MultiValue(pk=pk, yes_choices=int_yes_values, no_choices=int_no_values)
+        data_file.write(value)
+
+    def write_to_one_answer_file(self, collection: Collection, pk: int, value: str) -> None:
+        """Writes answer to the OneValue file.
+
+
+        :param collection: Collection to write the value to
+        :param pk: Identifier of the value.
+        :param value: Value to write to, in this case it's just the one chosen position.
+        """
         int_value = self._choices[collection.choices_name].dict_values[value]
         log.debug(f"Writing to {collection.name}: {pk} -> {value}[{int_value}]")
 
-        with open(self._get_file_name(collection, FileType.IDS), "ab") as f:
-            self._ids[collection.name].append(pk)
-            f.write(pk.to_bytes(4, byteorder="big"))
+        self._ids[collection.name].append(pk)
+        IdsDataFile(self._get_file_name(collection, FileType.IDS)).write(pk)
 
-        with open(self._get_file_name(collection, FileType.DATA), "ab") as f:
-            f.write(pk.to_bytes(4, byteorder="big"))
-            f.write(int_value.to_bytes(2, byteorder="big"))
-
-    def read_one_answer_file(self, collection: Collection) -> OneAnswer:
-        """Reads one answer file."""
-
-        file_path = self._get_file_name(collection, FileType.DATA)
-
-        if not os.path.exists(file_path):
-            return
-
-        with open(file_path, "rb") as f:
-            while True:
-                pk = f.read(4)
-                value = f.read(2)
-                if pk and value:
-                    value = int.from_bytes(value, byteorder="big")
-                    pk = int.from_bytes(pk, byteorder="big")
-                    yield OneAnswer(pk=pk, value=value)
-                else:
-                    break
+        OneValueDataFile(self._get_file_name(collection, FileType.ONE_VALUE)).write(OneValue(pk=pk, value=int_value))
 
     def _check_id_is_in_file(self, collection: Collection, pk: int):
         return pk in self._ids[collection.name]
