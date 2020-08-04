@@ -3,9 +3,12 @@
 
 """
 
+import logging
 from dataclasses import dataclass
+from time import sleep
 
 import click
+from pymongo.collection import Collection
 
 from common import (
     get_db_collection,
@@ -13,25 +16,10 @@ from common import (
     CONFIG_DEFAULT_MONGODB_CONNECTION_STRING,
     CONFIG_DEFAULT_MONGODB_DB_NAME,
     CONFIG_DEFAULT_STORAGE_DIR,
-    CONFIG_DEFAULT_DATA_DIR,
     CONFIG_DEFAULT_STORAGE_BATCH_SIZE,
     FETCHED_FIELD_NAME,
 )
-from pymongo.collection import Collection
-
 from database.db import Database
-
-import glob
-import logging
-import os
-import time
-from dataclasses import dataclass
-from json import loads
-from database.db import Database
-import bson
-import click
-from bson.raw_bson import RawBSONDocument
-from time import sleep
 
 log = logging.getLogger(__name__)
 
@@ -63,7 +51,7 @@ def start_data_watcher(session: Session) -> None:
     and stores it on disk.
 
     It sleeps for a couple of seconds between the checks unless there is lots of documents to fetch.
-    Then it's feetching as fast as possible.
+    Then it's fetching as fast as possible.
 
     """
 
@@ -85,11 +73,10 @@ def start_data_watcher(session: Session) -> None:
 
             session.storage.store_answer(document)
 
-            # collection.update_one({'_id': document['_id']}, {"$set": {FETCHED_FIELD_NAME: True}})
+            collection.update_one({"_id": document["_id"]}, {"$set": {FETCHED_FIELD_NAME: True}})
             log.info(f"Updated document: {document['_id']}")
 
         sleep(0.2)
-        exit(0)
 
 
 @click.command()

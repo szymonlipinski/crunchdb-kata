@@ -1,11 +1,9 @@
-from typing import Any
-
 import logging
-import json
 import os.path
 from dataclasses import dataclass
-from enum import Enum
+from typing import Any
 from typing import List
+
 from bitarray import bitarray
 
 log = logging.getLogger(__name__)

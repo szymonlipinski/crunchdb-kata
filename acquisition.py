@@ -18,14 +18,13 @@ from json import loads
 import bson
 import click
 from bson.raw_bson import RawBSONDocument
-
+from pymongo.collection import Collection
 from watchdog.events import (
     FileSystemEventHandler,
     EVENT_TYPE_CREATED,
     EVENT_TYPE_MODIFIED,
 )
 from watchdog.observers import Observer
-from pymongo.collection import Collection
 
 from common import (
     get_db_collection,

@@ -1,8 +1,8 @@
 """
 Database storage_dir.
 """
-import logging
 import json
+import logging
 import os.path
 from dataclasses import dataclass
 from enum import Enum
