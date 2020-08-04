@@ -38,11 +38,11 @@ def test_writing_multiple_values(temp_file):
     """We should be able to write and read one value, the file should have good size."""
     data_file = SingleValueDataFile(temp_file)
 
-    MIN = 0
-    MAX = 1234
-    MAX_LENGTH = randrange(200, 400)
+    min = 0
+    max = 1234
+    max_length = randrange(2000, 3000)
 
-    values = [SingleValue(randrange(MIN, MAX), randrange(MIN, MAX)) for _ in range(1, randrange(0, MAX_LENGTH))]
+    values = [SingleValue(randrange(min, max), randrange(min, max)) for _ in range(1, randrange(0, max_length))]
 
     for value in values:
         data_file.write(value)

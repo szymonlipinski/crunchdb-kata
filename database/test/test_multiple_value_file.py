@@ -9,11 +9,11 @@ from typing import List
 temp_file
 
 
-# def test_non_existing_file():
-#     """For non existing file, we should get an empty list when reading it."""
-#     data_file = MultiValueDataFile("akjdhakjdhas", 10)
-#     a = list(data_file.read())
-#     assert a == []
+def test_non_existing_file():
+    """For non existing file, we should get an empty list when reading it."""
+    data_file = MultiValueDataFile("akjdhakjdhas", 10)
+    a = list(data_file.read())
+    assert a == []
 
 
 def test_writing_one_value(temp_file):
@@ -53,7 +53,7 @@ def test_writing_multiple_values(temp_file):
 
     min = 0
     max = 1234
-    max_length = randrange(1000, 1200)
+    max_length = randrange(2000, 2200)
 
     values = [
         MultiValue(

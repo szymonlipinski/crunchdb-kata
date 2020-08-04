@@ -3,7 +3,7 @@ import os.path
 from dataclasses import dataclass
 from typing import Any
 from typing import List
-
+from typing import Generator
 from bitarray import bitarray
 
 log = logging.getLogger(__name__)
@@ -49,7 +49,7 @@ class IdsDataFile(DataFile):
         with open(self.file_path, "ab") as f:
             f.write(self._to_four_bytes(value))
 
-    def read(self):
+    def read(self) -> Generator[int, None, None]:
         if not os.path.exists(self.file_path):
             return
 
@@ -68,7 +68,7 @@ class SingleValueDataFile(DataFile):
             f.write(self._to_four_bytes(value.pk))
             f.write(self._to_two_bytes(value.value))
 
-    def read(self):
+    def read(self) -> Generator[SingleValue, None, None]:
         if not os.path.exists(self.file_path):
             return
 
@@ -119,7 +119,7 @@ class MultiValueDataFile(DataFile):
 
         return res
 
-    def read(self) -> MultiValue:
+    def read(self) -> Generator[MultiValue, None, None]:
         if not os.path.exists(self.file_path):
             return
 
@@ -128,7 +128,6 @@ class MultiValueDataFile(DataFile):
                 pk = f.read(4)
                 yes_value = f.read(self.size_in_bytes)
                 no_value = f.read(self.size_in_bytes)
-                print(f"{pk}")
 
                 if pk and yes_value and no_value:
                     yield MultiValue(

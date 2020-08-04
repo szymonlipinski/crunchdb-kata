@@ -13,6 +13,6 @@ clean:
 	black database/test/*.py
 
 test:
-	pytest database
+	pytest -n 5 database
 
 .PHONY: load-files clean storage
