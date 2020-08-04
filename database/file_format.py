@@ -92,8 +92,8 @@ class MultiValueDataFile(DataFile):
             self.size_in_bytes += 1
 
     def write(self, value: MultiValue):
-        yes_bits = bitarray(self.size)
-        no_bits = bitarray(self.size)
+        yes_bits = bitarray(self.size, endian=self.BYTEORDER)
+        no_bits = bitarray(self.size, endian=self.BYTEORDER)
         yes_bits.setall(0)
         no_bits.setall(0)
 
@@ -108,6 +108,17 @@ class MultiValueDataFile(DataFile):
             f.write(yes_bits.tobytes())
             f.write(no_bits.tobytes())
 
+    def _convert_bitarray_to_indices(self, value: bytes) -> List[int]:
+        res = []
+        bits = bitarray(endian=self.BYTEORDER)
+        bits.frombytes(value)
+
+        for n in range(0, self.size):
+            if bits[n]:
+                res.append(n)
+
+        return res
+
     def read(self) -> MultiValue:
         if not os.path.exists(self.file_path):
             return
@@ -117,11 +128,13 @@ class MultiValueDataFile(DataFile):
                 pk = f.read(4)
                 yes_value = f.read(self.size_in_bytes)
                 no_value = f.read(self.size_in_bytes)
+                print(f"{pk}")
+
                 if pk and yes_value and no_value:
                     yield MultiValue(
                         pk=self._from_bytes(pk),
-                        yes_choices=bitarray().frombytes(yes_value),
-                        no_choices=bitarray().frombytes(no_value),
+                        yes_choices=self._convert_bitarray_to_indices(yes_value),
+                        no_choices=self._convert_bitarray_to_indices(no_value),
                     )
                 else:
                     break
