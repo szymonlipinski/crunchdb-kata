@@ -1,7 +1,8 @@
-from tempfile import mkdtemp, mkstemp
-import pytest
-import shutil
 import os
+import shutil
+from tempfile import mkdtemp, mkstemp
+
+import pytest
 
 
 @pytest.fixture

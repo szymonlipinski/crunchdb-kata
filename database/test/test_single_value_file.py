@@ -1,11 +1,8 @@
-from ..file_format import SingleValueDataFile, SingleValue
-from .common import temp_file
-
-from tempfile import mkdtemp, mkstemp
-import pytest
-import shutil
 import os
 from random import randrange
+
+from .common import temp_file
+from ..file_format import SingleValueDataFile, SingleValue
 
 # this is a workaround, so the automated tools won't remove the import as unused
 temp_file
