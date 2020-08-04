@@ -46,6 +46,7 @@ class OneAnswer:
     pk: int
     value: int
 
+
 class Database:
     """Main database API."""
 
@@ -95,17 +96,11 @@ class Database:
 
         for name, values in config["choices"].items():
             # as we will be looking for the index of the value, we also need to have a dictionary with indices:
-            self._choices[name] = Choice(
-                name=name,
-                values=values,
-                dict_values={v: i for i, v in enumerate(values)},
-            )
+            self._choices[name] = Choice(name=name, values=values, dict_values={v: i for i, v in enumerate(values)},)
 
         for name, value in config["collections"].items():
             self._collections[name] = Collection(
-                name=name,
-                multiple_answers=value["multiple_answers"],
-                choices_name=value["choices"],
+                name=name, multiple_answers=value["multiple_answers"], choices_name=value["choices"],
             )
 
     def _validate_config(self, config: dict) -> None:
@@ -137,19 +132,12 @@ class Database:
 
         for name, value in collections.items():
             ma = value.get("multiple_answers")
-            assert (
-                    ma is not None
-            ), f"There should be the multiple_answers field for {name}."
-            assert ma in [
-                True,
-                False,
-            ], "Multiple_answers field should have values of true/false."
+            assert ma is not None, f"There should be the multiple_answers field for {name}."
+            assert ma in [True, False,], "Multiple_answers field should have values of true/false."
 
             ch = value.get("choices")
             assert ma is not None, f"There should be the choices field for {name}."
-            assert (
-                    ch in choice_names
-            ), f"The choices field should have one of the choices as value."
+            assert ch in choice_names, f"The choices field should have one of the choices as value."
 
     def store_answer(self, answer: dict) -> None:
         """Saves the answer to the collection.
@@ -204,9 +192,7 @@ class Database:
     def _check_id_is_in_file(self, collection: Collection, pk: int):
         return pk in self._ids[collection.name]
 
-    def count(
-            self, collection, first: int = 10, sorting: Sorting = Sorting.DESC
-    ) -> List[AggregatedAnswer]:
+    def count(self, collection, first: int = 10, sorting: Sorting = Sorting.DESC) -> List[AggregatedAnswer]:
         """Counts the choices for the collection.
 
         returns:

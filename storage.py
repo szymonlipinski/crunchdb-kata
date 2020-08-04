@@ -15,7 +15,7 @@ from common import (
     CONFIG_DEFAULT_STORAGE_DIR,
     CONFIG_DEFAULT_DATA_DIR,
     CONFIG_DEFAULT_STORAGE_BATCH_SIZE,
-    FETCHED_FIELD_NAME
+    FETCHED_FIELD_NAME,
 )
 from pymongo.collection import Collection
 
@@ -39,6 +39,7 @@ log = logging.getLogger(__name__)
 @dataclass
 class Config:
     """Class for storing command line arguments."""
+
     db_connection: str
     db_name: str
     db_collection: str
@@ -87,7 +88,6 @@ def start_data_watcher(session: Session) -> None:
             # collection.update_one({'_id': document['_id']}, {"$set": {FETCHED_FIELD_NAME: True}})
             log.info(f"Updated document: {document['_id']}")
 
-
         sleep(0.2)
         exit(0)
 
@@ -106,10 +106,7 @@ def start_data_watcher(session: Session) -> None:
     help="Connection string for the MongoDB database.",
 )
 @click.option(
-    "--db-name",
-    default=CONFIG_DEFAULT_MONGODB_DB_NAME,
-    show_default=True,
-    help="Name of the MongoDB database.",
+    "--db-name", default=CONFIG_DEFAULT_MONGODB_DB_NAME, show_default=True, help="Name of the MongoDB database.",
 )
 @click.option(
     "--db-collection",
@@ -134,11 +131,9 @@ def run(storage_dir, db_collection, db_name, db_connection, batch_size):
     session = Session(
         config=config,
         collection=get_db_collection(
-            connection_str=config.db_connection,
-            db_name=config.db_name,
-            collection_name=config.db_collection,
+            connection_str=config.db_connection, db_name=config.db_name, collection_name=config.db_collection,
         ),
-        storage=Database(config.storage_dir)
+        storage=Database(config.storage_dir),
     )
 
     start_data_watcher(session)

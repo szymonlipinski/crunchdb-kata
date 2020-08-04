@@ -33,7 +33,7 @@ from common import (
     CONFIG_DEFAULT_DATA_DIR,
     CONFIG_DEFAULT_MONGODB_COLLECTION_NAME,
     CONFIG_DEFAULT_MONGODB_CONNECTION_STRING,
-    CONFIG_DEFAULT_MONGODB_DB_NAME
+    CONFIG_DEFAULT_MONGODB_DB_NAME,
 )
 
 log = logging.getLogger(__name__)
@@ -50,13 +50,13 @@ class Config:
     db_name: str
     db_collection: str
 
+
 @dataclass
 class Session:
     """Class for storing global runtime variables."""
 
     config: Config
     collection: Collection
-
 
 
 def load_file(file_path: str, session: Session) -> None:
@@ -92,9 +92,7 @@ def load_existing_files(session: Session) -> None:
     """Loads all *.jsonl files from the given path.
 
     """
-    for file_path in glob.iglob(
-        os.path.join(session.config.data_dir, f"*{JSON_FILE_EXTENSION}")
-    ):
+    for file_path in glob.iglob(os.path.join(session.config.data_dir, f"*{JSON_FILE_EXTENSION}")):
         load_file(file_path, session)
 
 
@@ -114,9 +112,7 @@ class FilesEventHandler(FileSystemEventHandler):
 
 def start_files_watcher(session: Session) -> None:
     observer = Observer()
-    observer.schedule(
-        FilesEventHandler(session), session.config.data_dir, recursive=True
-    )
+    observer.schedule(FilesEventHandler(session), session.config.data_dir, recursive=True)
     log.info("Starting the file watcher.")
     observer.start()
     try:
@@ -141,10 +137,7 @@ def start_files_watcher(session: Session) -> None:
     help="Connection string for the MongoDB database.",
 )
 @click.option(
-    "--db-name",
-    default=CONFIG_DEFAULT_MONGODB_DB_NAME,
-    show_default=True,
-    help="Name of the MongoDB database.",
+    "--db-name", default=CONFIG_DEFAULT_MONGODB_DB_NAME, show_default=True, help="Name of the MongoDB database.",
 )
 @click.option(
     "--db-collection",
@@ -153,18 +146,11 @@ def start_files_watcher(session: Session) -> None:
     help="Name of the MongoDB collection.",
 )
 def run(db_collection, db_name, db_connection, data_dir):
-    config = Config(
-        data_dir=data_dir,
-        db_collection=db_collection,
-        db_connection=db_connection,
-        db_name=db_name,
-    )
+    config = Config(data_dir=data_dir, db_collection=db_collection, db_connection=db_connection, db_name=db_name,)
     session = Session(
         config=config,
         collection=get_db_collection(
-            connection_str=config.db_connection,
-            db_name=config.db_name,
-            collection_name=config.db_collection,
+            connection_str=config.db_connection, db_name=config.db_name, collection_name=config.db_collection,
         ),
     )
 
