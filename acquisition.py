@@ -25,6 +25,7 @@ from watchdog.events import (
     EVENT_TYPE_MODIFIED,
 )
 from watchdog.observers import Observer
+from pymongo.collection import Collection
 
 from common import (
     get_db_collection,
@@ -32,8 +33,7 @@ from common import (
     CONFIG_DEFAULT_DATA_DIR,
     CONFIG_DEFAULT_MONGODB_COLLECTION_NAME,
     CONFIG_DEFAULT_MONGODB_CONNECTION_STRING,
-    CONFIG_DEFAULT_MONGODB_DB_NAME,
-    Session,
+    CONFIG_DEFAULT_MONGODB_DB_NAME
 )
 
 log = logging.getLogger(__name__)
@@ -49,6 +49,14 @@ class Config:
     db_connection: str
     db_name: str
     db_collection: str
+
+@dataclass
+class Session:
+    """Class for storing global runtime variables."""
+
+    config: Config
+    collection: Collection
+
 
 
 def load_file(file_path: str, session: Session) -> None:
