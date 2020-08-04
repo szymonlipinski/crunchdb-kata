@@ -18,12 +18,13 @@ from json import loads
 import bson
 import click
 from bson.raw_bson import RawBSONDocument
-from pymongo.collection import Collection
+
 from watchdog.events import FileSystemEventHandler, EVENT_TYPE_CREATED, EVENT_TYPE_MODIFIED
 from watchdog.observers import Observer
 
 from common import get_db_collection, FETCHED_FIELD_NAME, CONFIG_DEFAULT_DATA_DIR, \
-    CONFIG_DEFAULT_MONGODB_COLLECTION_NAME, CONFIG_DEFAULT_MONGODB_CONNECTION_STRING, CONFIG_DEFAULT_MONGODB_DB_NAME
+    CONFIG_DEFAULT_MONGODB_COLLECTION_NAME, CONFIG_DEFAULT_MONGODB_CONNECTION_STRING, CONFIG_DEFAULT_MONGODB_DB_NAME, \
+    Session
 
 log = logging.getLogger(__name__)
 
@@ -32,22 +33,20 @@ JSON_FILE_EXTENSION = ".jsonl"
 
 @dataclass
 class Config:
+    """Class for storing command line arguments."""
     data_dir: str
     db_connection: str
     db_name: str
     db_collection: str
 
 
-@dataclass
-class Session:
-    config: Config
-    collection: Collection
-
-
 def load_file(file_path: str, session: Session) -> None:
     """Loads the file to the databases.
 
     If there already is a file with the same pk, then nothing is done.
+
+    The json is converted into BSON and it's stored like this in the database,
+    so 
     """
     # TODO: add error info about update-in-progress files
     # TODO: doc about _fetched
@@ -60,7 +59,6 @@ def load_file(file_path: str, session: Session) -> None:
             chunk['_id'] = doc_id
             chunk[FETCHED_FIELD_NAME] = False
 
-            # TODO: write why
             chunk = RawBSONDocument(bson.BSON.encode(chunk))
 
             if session.collection.count_documents({"_id": doc_id}) != 0:
@@ -108,14 +106,14 @@ def start_files_watcher(session: Session) -> None:
 
 @click.command()
 @click.option("--data-dir", default=CONFIG_DEFAULT_DATA_DIR, show_default=True,
-              help=f"Data with *{JSON_FILE_EXTENSION} files.")
+              help=f"Data directory with *{JSON_FILE_EXTENSION} files.")
 @click.option("--db-connection", default=CONFIG_DEFAULT_MONGODB_CONNECTION_STRING, show_default=True,
               help="Connection string for the MongoDB database.")
 @click.option("--db-name", default=CONFIG_DEFAULT_MONGODB_DB_NAME, show_default=True,
               help="Name of the MongoDB database.")
 @click.option("--db-collection", default=CONFIG_DEFAULT_MONGODB_COLLECTION_NAME, show_default=True,
               help="Name of the MongoDB collection.")
-def load(db_collection, db_name, db_connection, data_dir):
+def run(db_collection, db_name, db_connection, data_dir):
     config = Config(data_dir=data_dir, db_collection=db_collection, db_connection=db_connection, db_name=db_name)
     session = Session(config=config,
                       collection=get_db_collection(connection_str=config.db_connection, db_name=config.db_name,
@@ -126,4 +124,4 @@ def load(db_collection, db_name, db_connection, data_dir):
 
 
 if __name__ == "__main__":
-    load()
+    run()
