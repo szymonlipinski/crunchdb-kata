@@ -1,10 +1,10 @@
-from ..db import Database, DatabaseConfigException, Choice, Collection, AggregatedAnswer, Sorting
 import pytest
-from .common import temp_dir, copy_config
-import os
-from json.decoder import JSONDecodeError
-from shutil import copyfile, rmtree
-from tempfile import mkdtemp, mkstemp
+
+from .common import copy_config, temp_dir
+from ..db import Database, AggregatedAnswer, Sorting, SearchAnswer
+
+# this is a workaround, so the automated tools won't remove the import as unused
+temp_dir
 
 """
 
@@ -29,6 +29,17 @@ The sample config file is:
 """
 
 
+def assert_answer(expected_answer: SearchAnswer, current_answer: SearchAnswer):
+    """Function asserts that both answers are the same for the fields: `results`, `data_size`.
+
+    For the `time` field, we only check if `time > 0`.
+
+    """
+    assert expected_answer.results == current_answer.results
+    assert expected_answer.data_size == current_answer.data_size
+    assert current_answer.time >= 0.0
+
+
 def test_database_count_for_missing_collection(temp_dir):
     """There should be an exception when asking for a missing collection name."""
     copy_config("good_sample_config", temp_dir)
@@ -44,36 +55,35 @@ def test_count_for_empty_collection_for_single_choice(temp_dir):
     copy_config("good_sample_config", temp_dir)
     db = Database(temp_dir)
 
-    expected = [
-        AggregatedAnswer(value="brand_two", count=0),
-        AggregatedAnswer(value="brand_one", count=0),
-    ]
-    assert expected == db.count("collection_two")
+    expected = SearchAnswer(
+        results=[AggregatedAnswer(value="brand_two", count=0), AggregatedAnswer(value="brand_one", count=0)],
+        time=0.0,
+        data_size=0,
+    )
+    assert_answer(expected, db.count("collection_two"))
 
     # check sorting
 
-    expected = [
-        AggregatedAnswer(value="brand_two", count=0),
-        AggregatedAnswer(value="brand_one", count=0),
-    ]
-    assert expected == db.count("collection_two", sorting=Sorting.DESC)
+    expected = SearchAnswer(
+        results=[AggregatedAnswer(value="brand_two", count=0), AggregatedAnswer(value="brand_one", count=0)],
+        time=0.0,
+        data_size=0,
+    )
+    assert_answer(expected, db.count("collection_two", sorting=Sorting.DESC))
 
-    expected = [
-        AggregatedAnswer(value="brand_one", count=0),
-        AggregatedAnswer(value="brand_two", count=0),
-    ]
-    assert expected == db.count("collection_two", sorting=Sorting.ASC)
+    expected = SearchAnswer(
+        results=[AggregatedAnswer(value="brand_one", count=0), AggregatedAnswer(value="brand_two", count=0)],
+        time=0.0,
+        data_size=0,
+    )
+    assert_answer(expected, db.count("collection_two", sorting=Sorting.ASC))
 
     # check limit and sorting
-    expected = [
-        AggregatedAnswer(value="brand_two", count=0),
-    ]
-    assert expected == db.count("collection_two", sorting=Sorting.DESC, limit=1)
+    expected = SearchAnswer(results=[AggregatedAnswer(value="brand_two", count=0)], time=0.0, data_size=0,)
+    assert_answer(expected, db.count("collection_two", sorting=Sorting.DESC, limit=1))
 
-    expected = [
-        AggregatedAnswer(value="brand_one", count=0),
-    ]
-    assert expected == db.count("collection_two", sorting=Sorting.ASC, limit=1)
+    expected = SearchAnswer(results=[AggregatedAnswer(value="brand_one", count=0)], time=0.0, data_size=0,)
+    assert_answer(expected, db.count("collection_two", sorting=Sorting.ASC, limit=1))
 
 
 def test_count_for_empty_collection_for_multiple_choices(temp_dir):
@@ -81,39 +91,50 @@ def test_count_for_empty_collection_for_multiple_choices(temp_dir):
     copy_config("good_sample_config", temp_dir)
     db = Database(temp_dir)
 
-    expected = [
-        AggregatedAnswer(value="singer_two", count=0),
-        AggregatedAnswer(value="singer_three", count=0),
-        AggregatedAnswer(value="singer_one", count=0),
-    ]
-    assert expected == db.count("collection_one")
+    expected = SearchAnswer(
+        results=[
+            AggregatedAnswer(value="singer_two", count=0),
+            AggregatedAnswer(value="singer_three", count=0),
+            AggregatedAnswer(value="singer_one", count=0),
+        ],
+        time=0.0,
+        data_size=0,
+    )
+    assert_answer(expected, db.count("collection_one"))
 
     # check sorting
-    expected = [
-        AggregatedAnswer(value="singer_two", count=0),
-        AggregatedAnswer(value="singer_three", count=0),
-        AggregatedAnswer(value="singer_one", count=0),
-    ]
-    assert expected == db.count("collection_one", sorting=Sorting.DESC)
+    expected = SearchAnswer(
+        results=[
+            AggregatedAnswer(value="singer_two", count=0),
+            AggregatedAnswer(value="singer_three", count=0),
+            AggregatedAnswer(value="singer_one", count=0),
+        ],
+        time=0.0,
+        data_size=0,
+    )
+    assert_answer(expected, db.count("collection_one", sorting=Sorting.DESC))
 
-    expected = [
-        AggregatedAnswer(value="singer_one", count=0),
-        AggregatedAnswer(value="singer_three", count=0),
-        AggregatedAnswer(value="singer_two", count=0),
-    ]
-    assert expected == db.count("collection_one", sorting=Sorting.ASC)
+    expected = SearchAnswer(
+        results=[
+            AggregatedAnswer(value="singer_one", count=0),
+            AggregatedAnswer(value="singer_three", count=0),
+            AggregatedAnswer(value="singer_two", count=0),
+        ],
+        time=0.0,
+        data_size=0,
+    )
+    assert_answer(expected, db.count("collection_one", sorting=Sorting.ASC))
 
     # check limit and sorting
-    expected = [
-        AggregatedAnswer(value="singer_two", count=0),
-    ]
-    assert expected == db.count("collection_one", sorting=Sorting.DESC, limit=1)
+    expected = SearchAnswer(results=[AggregatedAnswer(value="singer_two", count=0)], time=0.0, data_size=0,)
+    assert_answer(expected, db.count("collection_one", sorting=Sorting.DESC, limit=1))
 
-    expected = [
-        AggregatedAnswer(value="singer_one", count=0),
-        AggregatedAnswer(value="singer_three", count=0),
-    ]
-    assert expected == db.count("collection_one", sorting=Sorting.ASC, limit=2)
+    expected = SearchAnswer(
+        results=[AggregatedAnswer(value="singer_one", count=0), AggregatedAnswer(value="singer_three", count=0)],
+        time=0.0,
+        data_size=0,
+    )
+    assert_answer(expected, db.count("collection_one", sorting=Sorting.ASC, limit=2))
 
 
 def test_database_with_simple_data(temp_dir):
@@ -136,18 +157,23 @@ def test_database_with_simple_data(temp_dir):
 
     db.store_answer(answer)
 
-    expected = [
-        AggregatedAnswer(value="singer_one", count=1),
-        AggregatedAnswer(value="singer_two", count=0),
-        AggregatedAnswer(value="singer_three", count=0),
-    ]
-    assert expected == db.count("collection_one")
+    expected = SearchAnswer(
+        results=[
+            AggregatedAnswer(value="singer_one", count=1),
+            AggregatedAnswer(value="singer_two", count=0),
+            AggregatedAnswer(value="singer_three", count=0),
+        ],
+        time=0.0,
+        data_size=1,
+    )
+    assert_answer(expected, db.count("collection_one"))
 
-    expected = [
-        AggregatedAnswer(value="brand_two", count=1),
-        AggregatedAnswer(value="brand_one", count=0),
-    ]
-    assert expected == db.count("collection_two")
+    expected = SearchAnswer(
+        results=[AggregatedAnswer(value="brand_two", count=1), AggregatedAnswer(value="brand_one", count=0)],
+        time=0.0,
+        data_size=1,
+    )
+    assert_answer(expected, db.count("collection_two"))
 
 
 def test_database_with_complicated_data(temp_dir):
@@ -242,69 +268,82 @@ def test_database_with_complicated_data(temp_dir):
     for answer in answers:
         db.store_answer(answer)
 
-    expected = [
-        AggregatedAnswer(value="singer_three", count=4),
-        AggregatedAnswer(value="singer_two", count=2),
-        AggregatedAnswer(value="singer_one", count=2),
-    ]
-    assert expected == db.count("collection_one")
+    expected = SearchAnswer(
+        results=[
+            AggregatedAnswer(value="singer_three", count=4),
+            AggregatedAnswer(value="singer_two", count=2),
+            AggregatedAnswer(value="singer_one", count=2),
+        ],
+        time=0.0,
+        data_size=5,
+    )
+    assert_answer(expected, db.count("collection_one"))
 
     # check sorting
-    expected = [
-        AggregatedAnswer(value="singer_three", count=4),
-        AggregatedAnswer(value="singer_two", count=2),
-        AggregatedAnswer(value="singer_one", count=2),
-    ]
-    assert expected == db.count("collection_one", sorting=Sorting.DESC)
+    expected = SearchAnswer(
+        results=[
+            AggregatedAnswer(value="singer_three", count=4),
+            AggregatedAnswer(value="singer_two", count=2),
+            AggregatedAnswer(value="singer_one", count=2),
+        ],
+        time=0.0,
+        data_size=5,
+    )
+    assert_answer(expected, db.count("collection_one", sorting=Sorting.DESC))
 
-    expected = [
-        AggregatedAnswer(value="singer_one", count=2),
-        AggregatedAnswer(value="singer_two", count=2),
-        AggregatedAnswer(value="singer_three", count=4),
-    ]
-    assert expected == db.count("collection_one", sorting=Sorting.ASC)
+    expected = SearchAnswer(
+        results=[
+            AggregatedAnswer(value="singer_one", count=2),
+            AggregatedAnswer(value="singer_two", count=2),
+            AggregatedAnswer(value="singer_three", count=4),
+        ],
+        time=0.0,
+        data_size=5,
+    )
+    assert_answer(expected, db.count("collection_one", sorting=Sorting.ASC))
 
     # check limits
 
-    expected = [
-        AggregatedAnswer(value="singer_three", count=4),
-        AggregatedAnswer(value="singer_two", count=2),
-    ]
-    assert expected == db.count("collection_one", sorting=Sorting.DESC, limit=2)
+    expected = SearchAnswer(
+        results=[AggregatedAnswer(value="singer_three", count=4), AggregatedAnswer(value="singer_two", count=2)],
+        time=0.0,
+        data_size=5,
+    )
+    assert_answer(expected, db.count("collection_one", sorting=Sorting.DESC, limit=2))
 
-    expected = [
-        AggregatedAnswer(value="singer_one", count=2),
-        AggregatedAnswer(value="singer_two", count=2),
-    ]
-    assert expected == db.count("collection_one", sorting=Sorting.ASC, limit=2)
+    expected = SearchAnswer(
+        results=[AggregatedAnswer(value="singer_one", count=2), AggregatedAnswer(value="singer_two", count=2)],
+        time=0.0,
+        data_size=5,
+    )
+    assert_answer(expected, db.count("collection_one", sorting=Sorting.ASC, limit=2))
 
     # check collection_two
-    expected = [
-        AggregatedAnswer(value="brand_two", count=3),
-        AggregatedAnswer(value="brand_one", count=2),
-    ]
-    assert expected == db.count("collection_two")
+    expected = SearchAnswer(
+        results=[AggregatedAnswer(value="brand_two", count=3), AggregatedAnswer(value="brand_one", count=2)],
+        time=0.0,
+        data_size=5,
+    )
+    assert_answer(expected, db.count("collection_two"))
 
     # check sorting
-    expected = [
-        AggregatedAnswer(value="brand_two", count=3),
-        AggregatedAnswer(value="brand_one", count=2),
-    ]
-    assert expected == db.count("collection_two", sorting=Sorting.DESC)
+    expected = SearchAnswer(
+        results=[AggregatedAnswer(value="brand_two", count=3), AggregatedAnswer(value="brand_one", count=2)],
+        time=0.0,
+        data_size=5,
+    )
+    assert_answer(expected, db.count("collection_two", sorting=Sorting.DESC))
 
-    expected = [
-        AggregatedAnswer(value="brand_one", count=2),
-        AggregatedAnswer(value="brand_two", count=3),
-    ]
-    assert expected == db.count("collection_two", sorting=Sorting.ASC)
+    expected = SearchAnswer(
+        results=[AggregatedAnswer(value="brand_one", count=2), AggregatedAnswer(value="brand_two", count=3)],
+        time=0.0,
+        data_size=5,
+    )
+    assert_answer(expected, db.count("collection_two", sorting=Sorting.ASC))
 
     # check limits
-    expected = [
-        AggregatedAnswer(value="brand_two", count=3),
-    ]
-    assert expected == db.count("collection_two", sorting=Sorting.DESC, limit=1)
+    expected = SearchAnswer(results=[AggregatedAnswer(value="brand_two", count=3)], time=0.0, data_size=5,)
+    assert_answer(expected, db.count("collection_two", sorting=Sorting.DESC, limit=1))
 
-    expected = [
-        AggregatedAnswer(value="brand_one", count=2),
-    ]
-    assert expected == db.count("collection_two", sorting=Sorting.ASC, limit=1)
+    expected = SearchAnswer(results=[AggregatedAnswer(value="brand_one", count=2)], time=0.0, data_size=5,)
+    assert_answer(expected, db.count("collection_two", sorting=Sorting.ASC, limit=1))
