@@ -1,0 +1,9 @@
+{
+
+  "collections": {
+    "one": {
+      "multiple_answers": true,
+      "choices": "choices_one"
+    }
+  }
+}

@@ -50,6 +50,12 @@ class Choice:
     dict_values: dict
 
 
+class DatabaseConfigException(Exception):
+    """Exception used by the Database class"""
+
+    pass
+
+
 class Database:
     """Main database API.
 
@@ -107,8 +113,11 @@ class Database:
     def _read_config(self) -> None:
         """Reads the config file, makes config file validation.
         """
-        with open(self._CONFIG_FILE_PATH) as f:
-            config = json.load(f)
+        try:
+            with open(self._CONFIG_FILE_PATH) as f:
+                config = json.load(f)
+        except Exception as e:
+            raise DatabaseConfigException(f"{e}")
 
         self._validate_config(config)
 
@@ -146,10 +155,18 @@ class Database:
             config: dictionary with parsed config.json file.
         """
         choices = config.get("choices")
-        assert choices is not None
+        if choices is None:
+            raise DatabaseConfigException("Missing 'choices' section of the config file.")
+
+        if not isinstance(choices, dict):
+            raise DatabaseConfigException("The 'choices' section should be a dictionary.")
 
         collections = config.get("collections")
-        assert collections is not None
+        if collections is None:
+            raise DatabaseConfigException("Missing 'collections' section of the config file.")
+
+        if not isinstance(collections, dict):
+            raise DatabaseConfigException("The 'collections' section should be a dictionary.")
 
         choice_names = list(choices)
         for _, value in choices.items():
