@@ -3,58 +3,40 @@ import pytest
 from .common import temp_dir, copy_config
 import os
 from json.decoder import JSONDecodeError
-from shutil import copyfile
+from shutil import copyfile, rmtree
+from tempfile import mkdtemp, mkstemp
 
 # this is a workaround, so the automated tools won't remove the import as unused
 temp_dir
 
 
-def test_no_config_file():
-    """Constructing the object should fail when the config file is not present."""
-    with pytest.raises(DatabaseConfigException) as e:
-        Database("aaa")
-    assert "No such file or directory: 'aaa/config.json'" in str(e.value)
+def test_parsing_file():
+    """This is a really, really ugly workaround.
+    It's hard to use the temp_dir fixture and the parametrized tests at the same time.
+    So, here I do it by hand.
+    """
 
+    params = [
+        # config_file, expected exception message
+        ("", "No such file or directory: '{tmpdir}/config.json'"),
+        ("bad_json", "Expecting value: line 1 column 1 (char 0)"),
+        ("missing_choices", "Missing 'choices' section of the config file."),
+        ("bad_choices_format", "The 'choices' section should be a dictionary."),
 
-def test_bad_json(temp_dir):
-    copy_config("bad_json", temp_dir)
+        ("missing_collections", "Missing 'collections' section of the config file."),
+        ("bad_collections_format", "The 'collections' section should be a dictionary."),
+    ]
+    for config_name, expected_message in params:
+        try:
+            tmpdir = mkdtemp(prefix="crunch_test_")
 
-    with pytest.raises(DatabaseConfigException) as e:
-        Database(temp_dir)
-    assert "Expecting value: line 1 column 1 (char 0)" in str(e.value)
+            if config_name:
+                copy_config(config_name, tmpdir)
 
+            Database(tmpdir)
 
-def test_json_with_missing_choices(temp_dir):
-    copy_config("missing_choices", temp_dir)
+        except DatabaseConfigException as e:
+            assert expected_message.format(tmpdir=tmpdir) in str(e)
 
-    with pytest.raises(DatabaseConfigException) as e:
-        Database(temp_dir)
-
-    assert "Missing 'choices' section of the config file." in str(e.value)
-
-
-def test_json_with_bad_choices_format(temp_dir):
-    copy_config("bad_choices_format", temp_dir)
-
-    with pytest.raises(DatabaseConfigException) as e:
-        Database(temp_dir)
-
-    assert "The 'choices' section should be a dictionary." in str(e.value)
-
-
-def test_json_with_missing_collections(temp_dir):
-    copy_config("missing_collections", temp_dir)
-
-    with pytest.raises(DatabaseConfigException) as e:
-        Database(temp_dir)
-
-    assert "Missing 'collections' section of the config file." in str(e.value)
-
-
-def test_json_with_bad_collections_format(temp_dir):
-    copy_config("bad_collections_format", temp_dir)
-
-    with pytest.raises(DatabaseConfigException) as e:
-        Database(temp_dir)
-
-    assert "The 'collections' section should be a dictionary." in str(e.value)
+        finally:
+            rmtree(tmpdir)
