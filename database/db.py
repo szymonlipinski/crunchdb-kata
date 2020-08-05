@@ -214,12 +214,10 @@ class Database:
                     if key_parts[0] != name:
                         continue
                     choice_name = ".".join(key_parts[1:])
-                    print(choice_name)
                     if answer_value == "no":
                         no_choices.append(choice_name)
                     elif answer_value == "yes":
                         yes_choices.append(choice_name)
-                    print(yes_choices)
                 self.write_to_multi_answer_file(collection, pk, yes_choices, no_choices)
 
     def write_to_multi_answer_file(
@@ -237,13 +235,8 @@ class Database:
 
         log.debug(f"Writing to {collection.name}: {pk}")
 
-        print(self._choices[collection.choices_name].dict_values)
-
         int_yes_values = [self._choices[collection.choices_name].dict_values[value] for value in yes_choices]
         int_no_values = [self._choices[collection.choices_name].dict_values[value] for value in no_choices]
-
-        print(f"int_yes_values {int_yes_values}")
-        print(f"int_no_values {int_no_values}")
 
         self._ids[collection.name].append(pk)
         IdsDataFile(self._get_file_name(collection, FileType.IDS)).write(pk)
