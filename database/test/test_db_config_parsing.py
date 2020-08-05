@@ -1,10 +1,8 @@
-from ..db import Database, DatabaseConfigException, Choice, Collection
-import pytest
+from shutil import rmtree
+from tempfile import mkdtemp
+
 from .common import temp_dir, copy_config
-import os
-from json.decoder import JSONDecodeError
-from shutil import copyfile, rmtree
-from tempfile import mkdtemp, mkstemp
+from ..db import Database, DatabaseConfigException, Choice, Collection
 
 # this is a workaround, so the automated tools won't remove the import as unused
 temp_dir

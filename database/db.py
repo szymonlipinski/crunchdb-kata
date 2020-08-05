@@ -19,7 +19,7 @@ class FileType(Enum):
     """Type of the data file.
     """
 
-    ONE_VALUE = "single.data"
+    SINGLE_VALUE = "single.data"
     MULTI_VALUE = "multi.data"
     IDS = "ids"
 
@@ -214,10 +214,12 @@ class Database:
                     if key_parts[0] != name:
                         continue
                     choice_name = ".".join(key_parts[1:])
+                    print(choice_name)
                     if answer_value == "no":
                         no_choices.append(choice_name)
                     elif answer_value == "yes":
                         yes_choices.append(choice_name)
+                    print(yes_choices)
                 self.write_to_multi_answer_file(collection, pk, yes_choices, no_choices)
 
     def write_to_multi_answer_file(
@@ -235,14 +237,19 @@ class Database:
 
         log.debug(f"Writing to {collection.name}: {pk}")
 
+        print(self._choices[collection.choices_name].dict_values)
+
         int_yes_values = [self._choices[collection.choices_name].dict_values[value] for value in yes_choices]
         int_no_values = [self._choices[collection.choices_name].dict_values[value] for value in no_choices]
+
+        print(f"int_yes_values {int_yes_values}")
+        print(f"int_no_values {int_no_values}")
 
         self._ids[collection.name].append(pk)
         IdsDataFile(self._get_file_name(collection, FileType.IDS)).write(pk)
 
         data_file = MultiValueDataFile(
-            self._get_file_name(collection, FileType.MULTI_VALUE), len(self._choices[collection.choices_name].values)
+            self._get_file_name(collection, FileType.MULTI_VALUE), len(self._get_choices(collection))
         )
         value = MultiValue(pk=pk, yes_choices=int_yes_values, no_choices=int_no_values)
         data_file.write(value)
@@ -262,22 +269,63 @@ class Database:
         self._ids[collection.name].append(pk)
         IdsDataFile(self._get_file_name(collection, FileType.IDS)).write(pk)
 
-        SingleValueDataFile(self._get_file_name(collection, FileType.ONE_VALUE)).write(
+        SingleValueDataFile(self._get_file_name(collection, FileType.SINGLE_VALUE)).write(
             SingleValue(pk=pk, value=int_value)
         )
 
-    def count(self, collection, limit: int = 10, sorting: Sorting = Sorting.DESC) -> List[AggregatedAnswer]:
+    def _get_choices(self, collection):
+        """Returns list of choices for the collection.
+
+        Args:
+            collection: Collection to find the choices for.
+
+        Returns:
+            List of choices for the collection.
+        """
+        return self._choices[collection.choices_name].values
+
+    # TODO FIX DOC
+
+    def count(self, collection_name: str, limit: int = 10, sorting: Sorting = Sorting.DESC) -> List[AggregatedAnswer]:
         """Counts the choices for the collection.
+
+        In case of a multi choice collection, we count the answers where user chose "yes".
 
         All results are sorted by the count number (depending on the `sorting` argument).
         The results then are limited to the number of the `limit` argument.
 
         Args:
-            collection: Collection to count the data for.
+            collection_name: Name of the collection to count the data for.
             limit: Number of values to return.
             sorting: Sorting direction of the results.
 
         Returns:
             List of values with the count number.
         """
-        raise NotImplementedError
+        collection = self._collections.get(collection_name)
+        if collection is None:
+            raise ValueError("Bad collection name.")
+
+        choices = self._get_choices(collection)
+
+        result = {n: 0 for n in range(0, len(choices))}
+
+        if collection.multiple_answers:
+            df = MultiValueDataFile(self._get_file_name(collection, FileType.MULTI_VALUE), len(choices))
+            for answer in df.read():
+                for yes in answer.yes_choices:
+                    result[yes] += 1
+        else:
+            df = SingleValueDataFile(self._get_file_name(collection, FileType.SINGLE_VALUE))
+            for answer in df.read():
+                result[answer.value] += 1
+
+        # we need to translate the indices into the values:
+        result = {choices[index]: item for index, item in result.items()}
+
+        return [
+            AggregatedAnswer(name, value)
+            for name, value in sorted(result.items(), key=lambda x: (x[1], x[0]), reverse=sorting == Sorting.DESC)[
+                :limit
+            ]
+        ]
