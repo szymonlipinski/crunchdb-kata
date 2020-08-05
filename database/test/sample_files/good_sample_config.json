@@ -1,0 +1,16 @@
+{
+  "choices": {
+    "carbrands": ["brand_one", "brand_two"],
+    "singers": ["singer_one", "singer_two", "singer_three"]
+  },
+  "collections": {
+    "collection_one": {
+      "multiple_answers": true,
+      "choices": "singers"
+    },
+    "collection_two": {
+      "multiple_answers": false,
+      "choices": "carbrands"
+    }
+  }
+}

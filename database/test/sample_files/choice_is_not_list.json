@@ -1,0 +1,13 @@
+{
+  "choices": {
+    "one": [1,2,3],
+    "two": 10
+  },
+
+  "collections": {
+    "one": {
+      "multiple_answers": true,
+      "choices": "choices_one"
+    }
+  }
+}

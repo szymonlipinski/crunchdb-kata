@@ -1,0 +1,12 @@
+{
+  "choices": {
+    "one": [1,2,3],
+    "two": [1,2,3]
+  },
+
+  "collections": {
+    "one": {
+      "choices": "choices_one"
+    }
+  }
+}

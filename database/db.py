@@ -170,16 +170,21 @@ class Database:
 
         choice_names = list(choices)
         for _, value in choices.items():
-            assert isinstance(value, list), "Collection value should be a list."
+            if not isinstance(value, list):
+                raise DatabaseConfigException("Collection value should be a list.")
 
         for name, value in collections.items():
             ma = value.get("multiple_answers")
-            assert ma is not None, f"There should be the multiple_answers field for {name}."
-            assert ma in [True, False], "Multiple_answers field should have values of true/false."
+            if ma is None:
+                raise DatabaseConfigException(f"There should be the multiple_answers field for {name}.")
+            if ma not in [True, False]:
+                raise DatabaseConfigException("Multiple_answers field should have values of true/false.")
 
             ch = value.get("choices")
-            assert ma is not None, f"There should be the choices field for {name}."
-            assert ch in choice_names, f"The choices field should have one of the choices as value."
+            if ch is None:
+                raise DatabaseConfigException(f"There should be the choices field for {name}.")
+            if ch not in choice_names:
+                raise DatabaseConfigException("The choices field should have one of the choices as value.")
 
     def store_answer(self, answer: dict) -> None:
         """Saves the answer to the collection.
