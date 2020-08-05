@@ -10,7 +10,7 @@ temp_file
 
 
 def test_non_existing_file():
-    """For non existing file, we should get an empty list when reading it."""
+    """For non existing file, we should get an empty list when reading the values."""
     data_file = MultiValueDataFile("akjdhakjdhas", 10)
     a = list(data_file.read())
     assert a == []
@@ -26,7 +26,7 @@ def test_writing_one_value(temp_file):
 
 
 def test_writing_two_values(temp_file):
-    """We should be able to write and read two value, the file should have good size."""
+    """We should be able to write and read two values, the file should have good size."""
     data_file = MultiValueDataFile(temp_file, 36)
     values = [
         MultiValue(pk=123, yes_choices=[0, 1, 2, 3], no_choices=[7, 8, 9]),
@@ -44,11 +44,21 @@ def test_writing_two_values(temp_file):
 
 
 def make_unique_int_list(min: int, max: int, max_length: int) -> List[int]:
+    """Creates a unique sorted list of integers.
+
+    Args:
+        min: Minimum value of the integer.
+        max: Maximum value of the integer.
+        max_length: Maximum length of the list.
+
+    Returns:
+        A sorted list of random unique integers.
+    """
     return sorted(list(set([randrange(min, max) for _ in range(0, randrange(0, max_length))])))
 
 
 def test_writing_multiple_values(temp_file):
-    """We should be able to write and read one value, the file should have good size."""
+    """We should be able to write and read multiple values, the file should have good size."""
     data_file = MultiValueDataFile(temp_file, 1998)
 
     min = 0

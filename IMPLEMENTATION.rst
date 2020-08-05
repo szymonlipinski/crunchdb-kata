@@ -123,3 +123,11 @@ The Data Format Drawbacks
 - Every search currently requires a full sequential scan.
 
 
+Testing
+========
+
+Quickcheck
+----------
+
+I wanted to use quickcheck for random tests arguments, however there is a bug for the pytest quickcheck which made it a little bit problematic.
+https://bitbucket.org/pytest-dev/pytest-quickcheck/issues/15/randomize-marker-doesnt-work

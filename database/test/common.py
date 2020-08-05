@@ -13,7 +13,6 @@ def temp_dir():
     shutil.rmtree(tmpdir)
 
 
-# TODO add info about quickcheck https://bitbucket.org/pytest-dev/pytest-quickcheck/issues/15/randomize-marker-doesnt-work
 @pytest.fixture
 def temp_file():
     """Pytest fixture which creates a temporary file and removes it after the test."""
