@@ -116,7 +116,7 @@ def test_count_for_empty_collection_for_multiple_choices(temp_dir):
     assert expected == db.count("collection_one", sorting=Sorting.ASC, limit=2)
 
 
-def test_database(temp_dir):
+def test_database_with_simple_data(temp_dir):
     """Check the values read from a good sample config.
 
     This is a very simple example, there is not too much data.
@@ -126,7 +126,7 @@ def test_database(temp_dir):
     copy_config("good_sample_config", temp_dir)
     db = Database(temp_dir)
 
-    response_1 = {
+    answer = {
         "pk": "1",
         "collection_one.singer_one": "yes",
         "collection_one.singer_two": "no",
@@ -134,14 +134,13 @@ def test_database(temp_dir):
         "collection_two": "brand_two",
     }
 
-    db.store_answer(response_1)
+    db.store_answer(answer)
 
     expected = [
         AggregatedAnswer(value="singer_one", count=1),
         AggregatedAnswer(value="singer_two", count=0),
         AggregatedAnswer(value="singer_three", count=0),
     ]
-
     assert expected == db.count("collection_one")
 
     expected = [
@@ -149,3 +148,163 @@ def test_database(temp_dir):
         AggregatedAnswer(value="brand_one", count=0),
     ]
     assert expected == db.count("collection_two")
+
+
+def test_database_with_complicated_data(temp_dir):
+    """Check the values read from a good sample config.
+
+    This is a a little bit more complicated case.
+    """
+    copy_config("good_sample_config", temp_dir)
+    db = Database(temp_dir)
+
+    """
+    The below data is:
+    
+     Y => yes
+     N => no
+     - => not_answered
+    
+    collection_one:
+    --------------------------------------
+         :pk:     | 1 2 3 4 5 | total yes
+    --------------------------------------
+     singer_one   | Y Y N - - |     2 
+     singer_two   | N N Y - Y |     2
+     singer_three | Y Y Y - Y |     4
+    --------------------------------------
+    
+    collection_two:
+    
+      + => chosen
+      - => not chosen
+    
+    --------------------------------------
+         :pk:     | 1 2 3 4 5 | total yes
+    --------------------------------------
+      brand_one   | - - - + + |     2 
+      brand_two   | + + + - - |     3
+    --------------------------------------
+    
+    """
+    answers = [
+        {
+            "pk": "1",
+            "collection_one.singer_one": "yes",
+            "collection_one.singer_two": "no",
+            "collection_one.singer_three": "yes",
+            "collection_two": "brand_two",
+        },
+        {
+            "pk": "2",
+            "collection_one.singer_one": "yes",
+            "collection_one.singer_two": "no",
+            "collection_one.singer_three": "yes",
+            "collection_two": "brand_two",
+        },
+        {
+            "pk": "3",
+            "collection_one.singer_one": "no",
+            "collection_one.singer_two": "yes",
+            "collection_one.singer_three": "yes",
+            "collection_two": "brand_two",
+        },
+        {
+            "pk": "4",
+            "collection_one.singer_one": "not_answered",
+            "collection_one.singer_two": "not_answered",
+            "collection_one.singer_three": "not_answered",
+            "collection_two": "brand_one",
+        },
+        {
+            "pk": "5",
+            "collection_one.singer_one": "not_answered",
+            "collection_one.singer_two": "yes",
+            "collection_one.singer_three": "yes",
+            "collection_two": "brand_one",
+        },
+        # here the pk is repeating, so this should be not updated
+        {
+            "pk": "4",
+            "collection_one.singer_one": "yes",
+            "collection_one.singer_two": "yes",
+            "collection_one.singer_three": "yes",
+            "collection_two": "brand_two",
+        },
+        {
+            "pk": "5",
+            "collection_one.singer_one": "yes",
+            "collection_one.singer_two": "yes",
+            "collection_one.singer_three": "yes",
+            "collection_two": "brand_one",
+        },
+    ]
+    for answer in answers:
+        db.store_answer(answer)
+
+    expected = [
+        AggregatedAnswer(value="singer_three", count=4),
+        AggregatedAnswer(value="singer_two", count=2),
+        AggregatedAnswer(value="singer_one", count=2),
+    ]
+    assert expected == db.count("collection_one")
+
+    # check sorting
+    expected = [
+        AggregatedAnswer(value="singer_three", count=4),
+        AggregatedAnswer(value="singer_two", count=2),
+        AggregatedAnswer(value="singer_one", count=2),
+    ]
+    assert expected == db.count("collection_one", sorting=Sorting.DESC)
+
+    expected = [
+        AggregatedAnswer(value="singer_one", count=2),
+        AggregatedAnswer(value="singer_two", count=2),
+        AggregatedAnswer(value="singer_three", count=4),
+    ]
+    assert expected == db.count("collection_one", sorting=Sorting.ASC)
+
+    # check limits
+
+    expected = [
+        AggregatedAnswer(value="singer_three", count=4),
+        AggregatedAnswer(value="singer_two", count=2),
+    ]
+    assert expected == db.count("collection_one", sorting=Sorting.DESC, limit=2)
+
+    expected = [
+        AggregatedAnswer(value="singer_one", count=2),
+        AggregatedAnswer(value="singer_two", count=2),
+    ]
+    assert expected == db.count("collection_one", sorting=Sorting.ASC, limit=2)
+
+    # check collection_two
+    expected = [
+        AggregatedAnswer(value="brand_two", count=3),
+        AggregatedAnswer(value="brand_one", count=2),
+    ]
+    assert expected == db.count("collection_two")
+
+    # check sorting
+    expected = [
+        AggregatedAnswer(value="brand_two", count=3),
+        AggregatedAnswer(value="brand_one", count=2),
+    ]
+    assert expected == db.count("collection_two", sorting=Sorting.DESC)
+
+    expected = [
+        AggregatedAnswer(value="brand_one", count=2),
+        AggregatedAnswer(value="brand_two", count=3),
+    ]
+    assert expected == db.count("collection_two", sorting=Sorting.ASC)
+
+    # check limits
+    expected = [
+        AggregatedAnswer(value="brand_two", count=3),
+    ]
+    assert expected == db.count("collection_two", sorting=Sorting.DESC, limit=1)
+
+    expected = [
+        AggregatedAnswer(value="brand_one", count=2),
+    ]
+    assert expected == db.count("collection_two", sorting=Sorting.ASC, limit=1)
