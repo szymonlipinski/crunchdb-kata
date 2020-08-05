@@ -1,5 +1,6 @@
 """
-3. A python script (``query.py``) to read the data stored into the **system** and provide answers to one of the **questions**
+3. A python script (``query.py``) to read the data stored into the **system**
+   and provide answers to one of the **questions**
 
 
 We want to be able to answer these **questions**:
@@ -10,27 +11,13 @@ We want to be able to answer these **questions**:
 4. What's the favourite music artist?
 
 """
-"""
-2. A python script (``storage.py``) to fetch the preferences from MongoDB and move them into the **system**
-
-"""
 
 import logging
 from dataclasses import dataclass
-from time import sleep
 
 import click
-from pymongo.collection import Collection
 
-from common import (
-    get_db_collection,
-    CONFIG_DEFAULT_MONGODB_COLLECTION_NAME,
-    CONFIG_DEFAULT_MONGODB_CONNECTION_STRING,
-    CONFIG_DEFAULT_MONGODB_DB_NAME,
-    CONFIG_DEFAULT_STORAGE_DIR,
-    CONFIG_DEFAULT_STORAGE_BATCH_SIZE,
-    FETCHED_FIELD_NAME,
-)
+from common import CONFIG_DEFAULT_STORAGE_DIR
 from database.db import Database, Sorting
 
 log = logging.getLogger(__name__)
@@ -74,7 +61,7 @@ class Session:
     "--storage-dir",
     default=CONFIG_DEFAULT_STORAGE_DIR,
     show_default=True,
-    help=f"Data directory with the storage files.",
+    help="Data directory with the storage files.",
 )
 def run(storage_dir):
     config = Config(storage_dir=storage_dir,)
@@ -91,13 +78,13 @@ def run(storage_dir):
         question = questions[value - 1]
 
         click.secho(f"\n The chosen question: {question.question}", fg="green")
-        click.secho(f"Searching...", fg="green")
+        click.secho("Searching...", fg="green")
 
         search_result = session.storage.count(question.collection_name, limit=question.limit, sorting=question.sorting)
 
         results = search_result.results
 
-        click.secho(f"\nThe answer is:", fg="yellow")
+        click.secho("\nThe answer is:", fg="yellow")
         if len(results) == 1:
             click.secho(f"               {results[0].value}", fg="yellow")
         else:

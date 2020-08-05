@@ -84,7 +84,7 @@ def start_data_watcher(session: Session) -> None:
     "--storage-dir",
     default=CONFIG_DEFAULT_STORAGE_DIR,
     show_default=True,
-    help=f"Data directory with the storage files.",
+    help="Data directory with the storage files.",
 )
 @click.option(
     "--db-connection",

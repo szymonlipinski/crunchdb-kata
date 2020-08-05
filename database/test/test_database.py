@@ -186,32 +186,32 @@ def test_database_with_complicated_data(temp_dir):
 
     """
     The below data is:
-    
+
      Y => yes
      N => no
      - => not_answered
-    
+
     collection_one:
     --------------------------------------
          :pk:     | 1 2 3 4 5 | total yes
     --------------------------------------
-     singer_one   | Y Y N - - |     2 
+     singer_one   | Y Y N - - |     2
      singer_two   | N N Y - Y |     2
      singer_three | Y Y Y - Y |     4
     --------------------------------------
-    
+
     collection_two:
-    
+
       + => chosen
       - => not chosen
-    
+
     --------------------------------------
          :pk:     | 1 2 3 4 5 | total yes
     --------------------------------------
-      brand_one   | - - - + + |     2 
+      brand_one   | - - - + + |     2
       brand_two   | + + + - - |     3
     --------------------------------------
-    
+
     """
     answers = [
         {

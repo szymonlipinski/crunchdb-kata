@@ -3,8 +3,6 @@ import logging
 from bson import CodecOptions, SON
 from pymongo import MongoClient
 from pymongo.collection import Collection
-from typing import Any
-from dataclasses import dataclass
 
 FETCHED_FIELD_NAME = "_fetched"
 
