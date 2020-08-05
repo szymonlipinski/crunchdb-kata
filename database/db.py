@@ -266,7 +266,7 @@ class Database:
             SingleValue(pk=pk, value=int_value)
         )
 
-    def _get_choices(self, collection):
+    def _get_choices(self, collection) -> List[str]:
         """Returns list of choices for the collection.
 
         Args:
@@ -276,8 +276,6 @@ class Database:
             List of choices for the collection.
         """
         return self._choices[collection.choices_name].values
-
-    # TODO FIX DOC
 
     def count(self, collection_name: str, limit: int = 10, sorting: Sorting = Sorting.DESC) -> List[AggregatedAnswer]:
         """Counts the choices for the collection.
@@ -304,11 +302,13 @@ class Database:
         result = {n: 0 for n in range(0, len(choices))}
 
         if collection.multiple_answers:
+            # For the multiple answer we need to take each "yes" and add to the result
             df = MultiValueDataFile(self._get_file_name(collection, FileType.MULTI_VALUE), len(choices))
             for answer in df.read():
                 for yes in answer.yes_choices:
                     result[yes] += 1
         else:
+            # For single answer we need to just add the answer to the result
             df = SingleValueDataFile(self._get_file_name(collection, FileType.SINGLE_VALUE))
             for answer in df.read():
                 result[answer.value] += 1

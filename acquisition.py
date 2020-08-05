@@ -63,11 +63,9 @@ def load_file(file_path: str, session: Session) -> None:
 
     If there already is a file with the same pk, then nothing is done.
 
-    The json is converted into BSON and it's stored like this in the database,
-    so 
+    The json is converted into BSON and it's stored like this in the database
+    to avoid problems with dots in the keys.
     """
-    # TODO: add error info about update-in-progress files
-    # TODO: doc about _fetched
     try:
         with open(file_path) as f:
             log.info(f"Loading {file_path}")
