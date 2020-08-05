@@ -3,8 +3,8 @@ import logging
 import os.path
 from dataclasses import dataclass
 from enum import Enum
-from typing import List
-
+from typing import List, Any
+import time
 from .file_format import IdsDataFile, MultiValueDataFile, SingleValue, SingleValueDataFile, MultiValue
 
 log = logging.getLogger(__name__)
@@ -30,6 +30,21 @@ class AggregatedAnswer:
 
     value: str
     count: int
+
+
+@dataclass
+class SearchAnswer:
+    """Class for generic search answer.
+
+    Attributes:
+        results: data with the answer
+        time: search time in seconds
+        data_size: number of searched records
+    """
+
+    results: List[Any]
+    time: float
+    data_size: int
 
 
 @dataclass
@@ -277,7 +292,7 @@ class Database:
         """
         return self._choices[collection.choices_name].values
 
-    def count(self, collection_name: str, limit: int = 10, sorting: Sorting = Sorting.DESC) -> List[AggregatedAnswer]:
+    def count(self, collection_name: str, limit: int = 10, sorting: Sorting = Sorting.DESC) -> SearchAnswer:
         """Counts the choices for the collection.
 
         In case of a multi choice collection, we count the answers where user chose "yes".
@@ -293,6 +308,9 @@ class Database:
         Returns:
             List of values with the count number.
         """
+
+        start_time = time.time()
+
         collection = self._collections.get(collection_name)
         if collection is None:
             raise ValueError("Bad collection name.")
@@ -301,24 +319,34 @@ class Database:
 
         result = {n: 0 for n in range(0, len(choices))}
 
+        counter = 0
+
         if collection.multiple_answers:
             # For the multiple answer we need to take each "yes" and add to the result
             df = MultiValueDataFile(self._get_file_name(collection, FileType.MULTI_VALUE), len(choices))
             for answer in df.read():
+                counter += 1
                 for yes in answer.yes_choices:
                     result[yes] += 1
         else:
             # For single answer we need to just add the answer to the result
             df = SingleValueDataFile(self._get_file_name(collection, FileType.SINGLE_VALUE))
             for answer in df.read():
+                counter += 1
                 result[answer.value] += 1
 
         # we need to translate the indices into the values:
         result = {choices[index]: item for index, item in result.items()}
 
-        return [
-            AggregatedAnswer(name, value)
-            for name, value in sorted(result.items(), key=lambda x: (x[1], x[0]), reverse=sorting == Sorting.DESC)[
-                :limit
-            ]
-        ]
+        # and sort it
+        result = sorted(result.items(), key=lambda x: (x[1], x[0]), reverse=sorting == Sorting.DESC)
+
+        # and convert to the result objects
+        result = [AggregatedAnswer(name, value) for name, value in result]
+
+        # and limit the number of answers
+        result = result[:limit]
+
+        elapsed_time = time.time() - start_time
+
+        return SearchAnswer(results=result, time=elapsed_time, data_size=counter)

@@ -42,7 +42,7 @@ class Question:
     question: str
     collection_name: str
     sorting: Sorting
-    limit: 1
+    limit: int
 
 
 questions = [
@@ -95,12 +95,16 @@ def run(storage_dir):
 
         search_result = session.storage.count(question.collection_name, limit=question.limit, sorting=question.sorting)
 
+        results = search_result.results
+
         click.secho(f"\nThe answer is:", fg="yellow")
-        if len(search_result) == 1:
-            click.secho(f"               {search_result[0].value}", fg="yellow")
+        if len(results) == 1:
+            click.secho(f"               {results[0].value}", fg="yellow")
         else:
-            for index, result in enumerate(search_result):
+            for index, result in enumerate(results):
                 click.secho(f"               {index+1}. {result.value}", fg="yellow")
+
+        click.secho(f"Searched {search_result.data_size} records in {search_result.time:0.2f} seconds.")
 
         click.secho("\nDo you want to search again?")
 
