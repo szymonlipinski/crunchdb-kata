@@ -18,7 +18,9 @@ Physical Storage
 - All the data is stored in files in one directory.
 - There is a basic config file `"config.json"` with the whole storage configuration.
 - Each of the answers is named `"collection"`.
-- For each collection there is a data file named: `<collection>.data`.
+- For each collection there are two kinds of data files:
+    - for SingleValue collection: `<collection>.single.data`
+    - for MultiValue collection: `<collection>.multi.data`
 - For each collection there is also a file `<collection>.ids` with a list of `user_id` which is used to check of an answer is not loaded again.
 
 
@@ -88,8 +90,8 @@ The `not_answered` choices are not stored as they can be calculated from the sto
 they are the positions where both: chosen_yes_answer_bit_field and chosen_no_answer_bit_field
 have unset bits.
 
-Memory Requirements
-*******************
+Estimated Memory Requirements
+*****************************
 
 A randomly generated answer for the list of listened to singers has 95kB.
 There are 556 singers in the sample list.
@@ -106,12 +108,32 @@ Storing answer from one user would require:
                           total: 144B
 
 
-Storing data for 1k users would require:
+Storing data for 1k user answers would require:
 
 .. code-block::
 
     raw answer:  92MiB
     data file:  140KiB
+    -------------------
+         ratio: 0.1%
+
+Real Memory Requirements
+************************
+
+The script `data/generate_data.py` generated 1005 jsonl files (95KiB on average).
+There are 1k files loaded, which gives about 93MiB of data.
+
+The total size of the data stored on disk is:
+
+.. code-block::
+
+    ids files:    35KiB
+    data files:  650KiB
+    config file:  12KiB
+    ---------------
+    total:       697 KiB
+
+The data size ratio is 0.7%.
 
 
 The Data Format Drawbacks
@@ -129,5 +151,6 @@ Testing
 Quickcheck
 ----------
 
-I wanted to use quickcheck for random tests arguments, however there is a bug for the pytest quickcheck which made it a little bit problematic.
+I wanted to use quickcheck for random tests arguments.
+However, there is a bug for the pytest quickcheck, which made it a little bit problematic.
 https://bitbucket.org/pytest-dev/pytest-quickcheck/issues/15/randomize-marker-doesnt-work

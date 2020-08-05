@@ -1,6 +1,3 @@
-"""
-Database storage_dir.
-"""
 import json
 import logging
 import os.path
@@ -19,19 +16,26 @@ class Sorting(Enum):
 
 
 class FileType(Enum):
-    ONE_VALUE = "one.data"
+    """Type of the data file.
+    """
+
+    ONE_VALUE = "single.data"
     MULTI_VALUE = "multi.data"
     IDS = "ids"
 
 
 @dataclass
 class AggregatedAnswer:
+    """Class for storing the aggregated answer like counting number of occurrences."""
+
     value: str
     count: int
 
 
 @dataclass
 class Collection:
+    """Data structure for information about a Collection."""
+
     name: str
     multiple_answers: bool
     choices_name: str
@@ -39,13 +43,26 @@ class Collection:
 
 @dataclass
 class Choice:
+    """Data structure for information about a Choice."""
+
     name: str
     values: list
     dict_values: dict
 
 
 class Database:
-    """Main database API."""
+    """Main database API.
+
+    Args:
+        directory: data storage directory
+
+    Attributes:
+        CONFIG_FILE_NAME: name of the configuration file
+        _CONFIG_FILE_PATH: path of the configuration file
+        _ids: dictionary [collection_name->List[ids]]
+        _choices: dictionary [choice_name->List[Choice]]
+        _collections: dictionary [collection_name->List[Collection]]
+    """
 
     CONFIG_FILE_NAME = "config.json"
 
@@ -61,17 +78,35 @@ class Database:
         self._read_ids_files(self._collections.values())
 
     def _get_file_name(self, collection: Collection, file_type: FileType) -> str:
+        """Creates a file name base one the collection and the file type.
+
+        Examples:
+            For a Collection with name `XXX` and file type `FileType.MULTI_VALUE`
+            it will return: `XXX.multi.data`
+
+        Args:
+            collection: Collection to create the file name for.
+            file_type: Type of the file to create the name for.
+
+        Returns:
+            New file name for the collection and type.
+        """
         return os.path.join(self._directory, f"{collection.name}.{file_type.value}")
 
-    def _read_ids_files(self, collections: List[Collection]):
+    def _read_ids_files(self, collections: List[Collection]) -> None:
+        """Reads the ids files for the collections and stores them in self._ids.
 
+        Args:
+            collections: List of collections to read the ids files for.
+        """
         for collection in collections:
             self._ids[collection.name] = []
             file_path = self._get_file_name(collection, FileType.IDS)
             self._ids[collection.name] = list(IdsDataFile(file_path).read())
 
-    def _read_config(self):
-        """Reads the config file, makes basic validation."""
+    def _read_config(self) -> None:
+        """Reads the config file, makes config file validation.
+        """
         with open(self._CONFIG_FILE_PATH) as f:
             config = json.load(f)
 
@@ -102,6 +137,13 @@ class Database:
                   "choices": "choice_one"
                 },
             }
+        }
+
+        Raises:
+            AssertionError: in case of bad config file format
+
+        Args:
+            config: dictionary with parsed config.json file.
         """
         choices = config.get("choices")
         assert choices is not None
@@ -127,13 +169,13 @@ class Database:
 
         We don't support updates now, so if the answer is already stored, nothing will be written to any file.
 
-
-        :param answer: answer to store as dictionary from parsed json
+        Args:
+            answer: Answer to store as dictionary from parsed json.
         """
         pk = int(answer["pk"])
         for name, collection in self._collections.items():
 
-            if self._check_id_is_in_file(collection, pk):
+            if pk in self._ids[collection.name]:
                 log.info(f"There already is data for {collection} for pk={pk}, skipping it.")
                 continue
 
@@ -159,6 +201,18 @@ class Database:
     def write_to_multi_answer_file(
         self, collection: Collection, pk: int, yes_choices: List[str], no_choices: List[str]
     ) -> None:
+        """Writes answers to a multi value data file.
+
+        Args:
+            collection: Collection to write the value to.
+            pk: Primary key of the answer.
+            yes_choices: List of user selected choices where user answered "yes".
+            no_choices:  List of user selected choices where user answered "no".
+
+        """
+
+        log.debug(f"Writing to {collection.name}: {pk}")
+
         int_yes_values = [self._choices[collection.choices_name].dict_values[value] for value in yes_choices]
         int_no_values = [self._choices[collection.choices_name].dict_values[value] for value in no_choices]
 
@@ -172,12 +226,13 @@ class Database:
         data_file.write(value)
 
     def write_to_one_answer_file(self, collection: Collection, pk: int, value: str) -> None:
-        """Writes answer to the OneValue file.
+        """Writes answer to the SingleValue file.
 
+        Args:
+            collection: Collection to write the value to.
+            pk: Primary key of the answer.
+            value: Value to write to, in this case it's just the one chosen position.
 
-        :param collection: Collection to write the value to
-        :param pk: Identifier of the value.
-        :param value: Value to write to, in this case it's just the one chosen position.
         """
         int_value = self._choices[collection.choices_name].dict_values[value]
         log.debug(f"Writing to {collection.name}: {pk} -> {value}[{int_value}]")
@@ -189,13 +244,18 @@ class Database:
             SingleValue(pk=pk, value=int_value)
         )
 
-    def _check_id_is_in_file(self, collection: Collection, pk: int):
-        return pk in self._ids[collection.name]
-
-    def count(self, collection, first: int = 10, sorting: Sorting = Sorting.DESC) -> List[AggregatedAnswer]:
+    def count(self, collection, limit: int = 10, sorting: Sorting = Sorting.DESC) -> List[AggregatedAnswer]:
         """Counts the choices for the collection.
 
-        returns:
-            sorted in descending order list of all choices with the number of preferences
+        All results are sorted by the count number (depending on the `sorting` argument).
+        The results then are limited to the number of the `limit` argument.
+
+        Args:
+            collection: Collection to count the data for.
+            limit: Number of values to return.
+            sorting: Sorting direction of the results.
+
+        Returns:
+            List of values with the count number.
         """
-        pass
+        raise NotImplementedError
