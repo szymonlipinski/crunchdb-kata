@@ -6,6 +6,12 @@ load-files:
 storage:
 	python storage.py
 
+query:
+	python query.py
+
+check:
+	flake8
+
 clean:
 	black *.py
 	black database/*.py
