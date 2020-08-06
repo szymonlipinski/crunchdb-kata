@@ -221,7 +221,7 @@ The querying time depends if the size of the data (so the kind of the file and t
 
 All the current queries need to make the same kind of a sequential scan on one data file,
 prepare an internal data with names and counts for all the choices,
-and then sort and return the first one or three (I have added one more query to the list:
+and then sort, and return the first one or three (I have added one more query to the list:
 ``"What are the three least known music artist?"``).
 
 So, the algorithm is the same, the difference is just in the data.
