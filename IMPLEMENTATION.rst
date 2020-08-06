@@ -133,7 +133,7 @@ In case of multiple answers, the format is:
 - ``chosen_no_answer_bit_field``: is a bitset, where each set bit means user answered ``'no'`` to the choice at this index
 
 The ``not_answered`` choices are not stored as they can be calculated from the stored values.
-It would be enough to make binary and of ``chosen_yes_answer_bit_field`` and ``chosen_no_answer_bit_field`` and check
+It would be enough to make binary ``or`` of ``chosen_yes_answer_bit_field`` and ``chosen_no_answer_bit_field`` and check
 all the bits which are not set.
 
 Estimated Memory Requirements
