@@ -28,7 +28,7 @@ Other files and directories:
 * ``storage_dir`` - the default storage directory, currently filled with sample data
 * ``common`` - directory with common python code for all the three scripts
 * ``data`` - original directory with the original scripts for generating the data
-* ``data/data.tar.bz2`` - packed *.jsonl files used to generate the ``storage_dir`` data
+* ``data/data.tar.bz2`` - packed ``*.jsonl`` files used to generate the ``storage_dir`` data
 * ``database`` - main python package with the logic for storing the data on disk
 * ``database/test`` - tests for the storage functionality
 * ``database/sample_files`` - sample configuration files for testing different config files corruption
