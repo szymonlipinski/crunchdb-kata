@@ -246,6 +246,8 @@ That's why there is twice the time.
 Testing
 ========
 
+There are tests only for the Database class, for parsing the config file, and reading/writing the data files.
+
 Quickcheck
 ----------
 
