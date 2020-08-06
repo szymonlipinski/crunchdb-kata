@@ -7,7 +7,7 @@ import random
 from constants import *
 
 
-for ans in range(10005):
+for ans in range(1005):
     with open("chunk_%04d.jsonl" % ans, "w") as ansf:
         row = {"pk": "%d" % ans}
         for carvar in carvars:
