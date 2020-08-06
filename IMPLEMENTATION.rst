@@ -227,9 +227,10 @@ and then sort, and return the first one or three (I have added one more query to
 So, the algorithm is the same, the difference is just in the data.
 
 As you can see, for the single answer files, the times are the same, as we store exactly 6B for each answer,
-regardless the amount of choices.
+regardless of the amount of choices.
 
-For the multi answer files, there is twice more work to do with bits for the singers data than for the carbrands.
+For the multi answer files, there is much more data and much more work (as we need to unpack all the bits).
+What's more, there is twice more work to do with bits for the singers data than for the carbrands.
 That's why there is twice the time.
 
 
