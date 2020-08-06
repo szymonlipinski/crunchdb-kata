@@ -1,6 +1,6 @@
 
 
-load-files:
+acquire:
 	python acquisition.py
 
 storage:
@@ -21,4 +21,4 @@ clean:
 test:
 	pytest -n 5 database
 
-.PHONY: load-files clean storage
+.PHONY: acquire storage query check clean test

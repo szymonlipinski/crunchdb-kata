@@ -4,8 +4,8 @@ Database storage.
 Basic assumptions:
 ------------------
 
-- the list of questions will not change
-- there are two kind of questions: one choice and multiple choice
+- the list of the questions will not change
+- there are two kinds of questions: single choice and multiple choice
 - the kind of question will not change
 - there is a strict set of values a user can choice from
 - the set of choices will not change
@@ -135,7 +135,6 @@ The total size of the data stored on disk is:
 
 The data size ratio is 0.7%.
 
-
 The Data Format Drawbacks
 *************************
 
@@ -144,6 +143,45 @@ The Data Format Drawbacks
 - There is no data paging, so it would be difficult to create an index.
 - Every search currently requires a full sequential scan.
 
+Benchmarks
+==========
+
+I've generated 10,005 jsonl files.
+The size of the directory is 1018MiB.
+
+Loading files with `make acquire` took 22s.
+
+Loading the storage with `make storage` took about 340s.
+
+The storage files sizes are:
+
+.. code-block::
+
+            file type         |    number of options   | file extension |  file size
+    ----------------------------------------------------------------------------------
+      index file              |        10k of integers |          .ids  |     40 KiB
+      single answer data file |        556 [singers]   |  .single.data  |     59 KiB
+      single answer data file |        271 [carbrands] |  .single.data  |     59 KiB
+      multi answer data file  |        556 [singers]   |   .multi.data  |    1.4 MiB
+      multi answer data file  |        271 [carbrands] |   .multi.data  |    704 KiB
+
+The total directory size is 7 MiB.
+
+Querying Speed
+--------------
+
+The querying time depends if the size of the data (so the kind of the file and the size of potential choices).
+All the queries ask for the first one or the first three, so the data preparation is the same in all cases.
+
+
+.. code-block::
+
+            file type         |    number of options   |   query time
+    ----------------------------------------------------------------------------------
+      single answer data file |        556 [singers]   |     0.01 ms
+      single answer data file |        271 [carbrands] |     0.01 ms
+      multi answer data file  |        556 [singers]   |     0.88 ms
+      multi answer data file  |        271 [carbrands] |     0.41 ms
 
 Testing
 ========
@@ -154,3 +192,15 @@ Quickcheck
 I wanted to use quickcheck for random tests arguments.
 However, there is a bug for the pytest quickcheck, which made it a little bit problematic.
 https://bitbucket.org/pytest-dev/pytest-quickcheck/issues/15/randomize-marker-doesnt-work
+
+Makefile Commands
+=================
+
+There is a Makefile with the following commands:
+
+* `make acquire` - runs the `acquisition.py` with default arguments
+* `make storage` - runs the `storage.py` with default arguments
+* `make query`   - runs the `query.py` with default arguments
+* `make check`   - runs the `flake8` for basic checks
+* `make clean`   - runs the `black` formatter
+* `make test`    - runs the `pytest` with 5 threads

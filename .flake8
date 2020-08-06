@@ -1,0 +1,11 @@
+[flake8]
+ignore = D203
+exclude =
+    .git,
+    __pycache__,
+    data,
+    storage_dir,
+    old,
+    build,
+    dist
+max-line-length = 120
