@@ -7,10 +7,30 @@ Basic assumptions:
 * the list of the questions will not change
 * there are two kinds of questions: single choice and multiple choice
 * the kind of question will not change
-* there is a strict set of values a user can choice from
+* there is a strict set of values a user can choose from
 * the set of choices will not change
 * the user's answer for multi choice question can contain only ``yes/no/not_answered``
 * the three answers values will not change
+
+
+Implementation Details
+======================
+
+There are three main command line script. All are fully configurable from the command line. All the options
+should be described with the ``--help`` argument.
+
+* ``storage_dir`` - the default storage directory, currently filled with sample data
+* ``common`` - directory with common python code for all the three scripts
+* ``data`` - original directory with the original scripts for generating the data
+* ``data/data.tar.bz2`` - packed *.jsonl files used to generate the ``storage_dir`` data
+* ``database`` - main python package with the logic for storing the data on disk
+* ``database/test`` - tests for the storage functionality
+* ``database/sample_files`` - sample configuration files for testing different config files corruption
+* ``database/db.py`` - the storage interface used to read and write the data files
+* ``database/file_format.py`` - internal implementation of writing and reading the storage data file formats
+
+Data Format
+===========
 
 Physical Storage
 ----------------
@@ -23,8 +43,8 @@ Physical Storage
   * for SingleValue collection: ``<collection>.single.data``
   * for MultiValue collection: ``<collection>.multi.data``
 
-* For each collection there is also a file ``<collection>.ids`` with a list of ``user_id``,
-  which is used to check of an answer is not loaded again.
+* For each collection there is also a file ``<collection>.ids``, with a list of ``user_id`` values,
+  which is used to prevent of loading the same answer again.
 
 
 Config File Format
@@ -56,10 +76,13 @@ Data File Format
 
 The data file format depends on the number of possible replies.
 
-One Reply Data File Format
-**************************
+We have the list of possible choices to choose from in the config file.
+Here, in the data files, we store only the indices of the answers.
 
-In case of just one reply, the format is:
+Single Reply Data File Format
+*****************************
+
+In case of just one reply, the format of one answer is:
 
 
 .. code-block::
@@ -69,8 +92,8 @@ In case of just one reply, the format is:
     | user_id  | chosen_answer_id |
     -------------------------------
 
-- `user_id`: is an integer with the id of the user preferences
-- `chosen_answer_id`: is an integer with the answer id read from the config file
+- ``user_id``: is an integer with the id of the user preferences
+- ``chosen_answer_id``: is an integer with the answer index read from the config file
 
 Multiple Replies Data File Format
 *********************************
@@ -85,26 +108,26 @@ In case of multiple answers, the format is:
     -----------------------------------------------------------------------
 
 
-- `user_id`: is an integer with the id of the user preferences
-- `chosen_answer_bit_field`: is a bit set where each set bit means user answered 'yes' to the choice at this index
-- `chosen_no_answer_bit_field`: is a bit set where each set bit means user answered 'no' to the choice at this index
+- ``user_id``: is an integer with the id of the user preferences
+- ``chosen_yes_answer_bit_field``: is a bitset, where each set bit means user answered ``'yes'`` to the choice at this index
+- ``chosen_no_answer_bit_field``: is a bitset, where each set bit means user answered ``'no'`` to the choice at this index
 
-The `not_answered` choices are not stored as they can be calculated from the stored values,
-they are the positions where both: chosen_yes_answer_bit_field and chosen_no_answer_bit_field
-have unset bits.
+The ``not_answered`` choices are not stored as they can be calculated from the stored values.
+It would be enough to make binary and of ``chosen_yes_answer_bit_field`` and ``chosen_no_answer_bit_field`` and check
+all the bits which are not set.
 
 Estimated Memory Requirements
 *****************************
 
 A randomly generated answer for the list of listened to singers has 95kB.
 There are 556 singers in the sample list.
-Storing 556 bits require 70B.
+Storing 556 bits require 70B (as we would need to save whole bytes to a file).
 
-Storing answer from one user would require:
+Storing this kind of answer from one user would require:
 
 .. code-block::
 
-    user_id:                       4B
+    pk:                            4B
     chosen_yes_answer_bit_field:  70B
     chosen_no_answer_bit_field:   70B
                     -----------------
@@ -123,18 +146,18 @@ Storing data for 1k user answers would require:
 Real Memory Requirements
 ************************
 
-The script `data/generate_data.py` generated 1005 jsonl files (95KiB on average).
+The script ``data/generate_data.py`` generated 1005 jsonl files (95KiB on average).
 There are 1k files loaded, which gives about 93MiB of data.
 
 The total size of the data stored on disk is:
 
 .. code-block::
 
-    ids files:    35KiB
-    data files:  650KiB
-    config file:  12KiB
-    ---------------
-    total:       697 KiB
+    ids files:    35KB
+    data files:  650KB
+    config file:  12KB
+    -------------------
+    total:       697KB
 
 The data size ratio is 0.7%.
 
@@ -142,9 +165,10 @@ The Data Format Drawbacks
 *************************
 
 - There is no update of the data possible.
-- The preferences for a `user_id` can be loaded only once.
-- There is no data paging, so it would be difficult to create an index.
-- Every search currently requires a full sequential scan.
+- The preferences for a ``pk`` can be loaded only once.
+- There is no data paging, so it would be difficult to create an index
+  (unless we index the exact byte position in a file, which can be not so efficient).
+- Currently, every search requires a full sequential scan.
 
 Benchmarks
 ==========
@@ -152,9 +176,9 @@ Benchmarks
 I've generated 10,005 jsonl files.
 The size of the directory is 1018MB.
 
-Loading files with `make acquire` took 22s.
+Loading the files to MongoDB with ``make acquire`` took about 22s.
 
-Loading the storage with `make storage` took about 340s.
+Loading the data form the MongoDB to the storage with ``make storage`` took about 340s.
 
 The storage files sizes are:
 
@@ -174,7 +198,19 @@ Querying Speed
 --------------
 
 The querying time depends if the size of the data (so the kind of the file and the size of potential choices).
-All the queries ask for the first one or the first three, so the data preparation is the same in all cases.
+
+All the current queries need to make the same kind of a sequential scan on one data file,
+prepare an internal data with names and counts for all the choices,
+and then sort and return the first one or three (I have added one more query to the list:
+``"What are the three least known music artist?"``).
+
+So, the algorithm is the same, the difference is just in the data.
+
+As you can see, for the single answer files, the times are the same, as we store exactly 6B for each answer,
+regardless the amount of choices.
+
+For the multi answer files, there is twice more work to do with bits for the singers data than for the carbrands.
+That's why there is twice the time.
 
 
 .. code-block::
