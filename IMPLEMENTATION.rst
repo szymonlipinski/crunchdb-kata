@@ -4,30 +4,33 @@ Database storage.
 Basic assumptions:
 ------------------
 
-- the list of the questions will not change
-- there are two kinds of questions: single choice and multiple choice
-- the kind of question will not change
-- there is a strict set of values a user can choice from
-- the set of choices will not change
-- the user's answer for multi choice question can contain only `yes/no/not_answered`
-- the three answers values will not change
+* the list of the questions will not change
+* there are two kinds of questions: single choice and multiple choice
+* the kind of question will not change
+* there is a strict set of values a user can choice from
+* the set of choices will not change
+* the user's answer for multi choice question can contain only ``yes/no/not_answered``
+* the three answers values will not change
 
 Physical Storage
 ----------------
 
-- All the data is stored in files in one directory.
-- There is a basic config file `"config.json"` with the whole storage configuration.
-- Each of the answers is named `"collection"`.
-- For each collection there are two kinds of data files:
-    - for SingleValue collection: `<collection>.single.data`
-    - for MultiValue collection: `<collection>.multi.data`
-- For each collection there is also a file `<collection>.ids` with a list of `user_id` which is used to check of an answer is not loaded again.
+* All the data is stored in files in one directory.
+* There is a basic config file ``"config.json"``, with the whole storage configuration.
+* Each of the answers is named ``"collection"``.
+* For each collection there are two kinds of data files:
+
+  * for SingleValue collection: ``<collection>.single.data``
+  * for MultiValue collection: ``<collection>.multi.data``
+
+* For each collection there is also a file ``<collection>.ids`` with a list of ``user_id``,
+  which is used to check of an answer is not loaded again.
 
 
 Config File Format
 ~~~~~~~~~~~~~~~~~~
 
-In the data directory, there is a basic config file "config.json" in the format of:
+In the data directory, there is a basic config file ``"config.json"`` in the format of:
 
 .. code-block:: json
 
