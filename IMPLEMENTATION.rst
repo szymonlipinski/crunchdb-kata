@@ -16,8 +16,14 @@ Basic assumptions:
 Implementation Details
 ======================
 
-There are three main command line script. All are fully configurable from the command line. All the options
-should be described with the ``--help`` argument.
+There are three main command line scripts. All are fully configurable from the command line. All the options
+should be described with the ``--help`` argument:
+
+* ``acquisition.py`` - for loading the jsonl files to the MongoDB
+* ``storage.py`` - for loading the data from the MongoDB to the storage disk files
+* ``query.py`` - for querying the stored data
+
+Other files and directories:
 
 * ``storage_dir`` - the default storage directory, currently filled with sample data
 * ``common`` - directory with common python code for all the three scripts
@@ -28,6 +34,20 @@ should be described with the ``--help`` argument.
 * ``database/sample_files`` - sample configuration files for testing different config files corruption
 * ``database/db.py`` - the storage interface used to read and write the data files
 * ``database/file_format.py`` - internal implementation of writing and reading the storage data file formats
+
+Additional notes:
+
+* There is no locking of the scripts, so it's possible that race conditions could do some bad things
+  when running that in parallel, but it was going to be a simple implementation.
+
+The MongoDB Data
+=================
+
+The MongoDB data is modified a little bit:
+
+* The ``"_id"`` field is filled with the ``"pk"`` value.
+* There is a new field ``"_fetched"`` set to False, which is later set to True by the storage.py script
+  to avoid fetching the same data again.
 
 Data Format
 ===========

@@ -108,6 +108,8 @@ def start_data_watcher(session: Session) -> None:
     help="Size of the batch to download from MongoDB.",
 )
 def run(storage_dir, db_collection, db_name, db_connection, batch_size):
+    """A script for loading data from the MongoDB to the storage binary files.
+    """
     config = Config(
         storage_dir=storage_dir,
         db_collection=db_collection,

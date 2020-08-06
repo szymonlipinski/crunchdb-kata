@@ -143,6 +143,8 @@ def start_files_watcher(session: Session) -> None:
     help="Name of the MongoDB collection.",
 )
 def run(db_collection, db_name, db_connection, data_dir):
+    """A script for loading the *.jsonl files to the MongoDB.
+    """
     config = Config(data_dir=data_dir, db_collection=db_collection, db_connection=db_connection, db_name=db_name,)
     session = Session(
         config=config,

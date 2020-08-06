@@ -64,6 +64,8 @@ class Session:
     help="Data directory with the storage files.",
 )
 def run(storage_dir):
+    """The main user interface to select the query the stored data.
+    """
     config = Config(storage_dir=storage_dir,)
     session = Session(config=config, storage=Database(config.storage_dir),)
 
