@@ -147,7 +147,7 @@ Benchmarks
 ==========
 
 I've generated 10,005 jsonl files.
-The size of the directory is 1018MiB.
+The size of the directory is 1018MB.
 
 Loading files with `make acquire` took 22s.
 
@@ -159,13 +159,13 @@ The storage files sizes are:
 
             file type         |    number of options   | file extension |  file size
     ----------------------------------------------------------------------------------
-      index file              |        10k of integers |          .ids  |     40 KiB
-      single answer data file |        556 [singers]   |  .single.data  |     59 KiB
-      single answer data file |        271 [carbrands] |  .single.data  |     59 KiB
-      multi answer data file  |        556 [singers]   |   .multi.data  |    1.4 MiB
-      multi answer data file  |        271 [carbrands] |   .multi.data  |    704 KiB
+      index file              |        10k of integers |          .ids  |     40 KB
+      single answer data file |        556 [singers]   |  .single.data  |     59 KB
+      single answer data file |        271 [carbrands] |  .single.data  |     59 KB
+      multi answer data file  |        556 [singers]   |   .multi.data  |    1.4 MB
+      multi answer data file  |        271 [carbrands] |   .multi.data  |    704 KB
 
-The total directory size is 7 MiB.
+The total directory size is 7 MB.
 
 Querying Speed
 --------------
